@@ -1,16 +1,36 @@
 import pandas as pd
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output
-from datetime import datetime
+from datetime import datetime, timedelta
 
-# Dummy data
+# Prowler summary-based data
 statuses = ["FAIL"] * 20 + ["PASS"]
-severities = ["medium", "high", "low", "medium", "medium", "high", "high", "high", "high", "high", "high", "high", "high", "high", "high", "medium", "medium", "high", "medium", "medium", "high"]
-services = ["network", "iam", "appinsights", "monitor", "monitor", "monitor", "monitor", "monitor", "monitor", "monitor", "monitor", "monitor", "monitor", "monitor", "monitor", "defender", "defender", "defender", "network", "iam", "iam"]
-checks = ["network_bastion_host_exists", "iam_custom_role_has_permissions_to_administer_resource_locks", "appinsights_ensure_is_configured", "monitor_diagnostic_setting_with_appropriate_categories", "monitor_diagnostic_settings_exists", "monitor_alert_create_update_nsg", "monitor_alert_create_update_public_ip_address_rule", "monitor_alert_create_update_security_solution", "monitor_alert_create_update_sqlserver_fr", "monitor_alert_create_policy_assignment", "monitor_alert_delete_nsg", "monitor_alert_delete_policy_assignment", "monitor_alert_delete_public_ip_address_rule", "monitor_alert_delete_security_solution", "monitor_alert_delete_sqlserver_fr", "defender_ensure_mcas_is_enabled", "defender_ensure_wdatp_is_enabled", "defender_ensure_iot_hub_defender_is_on", "network_watcher_enabled", "iam_subscription_roles_owner_custom_not_created", "iam_test"]
+severities = [
+    "medium", "high", "low", "medium", "medium", "high", "high", "high", "high", "high",
+    "high", "high", "high", "high", "high", "medium", "medium", "high", "medium", "medium", "high"
+]
+services = [
+    "network", "iam", "appinsights", "monitor", "monitor", "monitor", "monitor", "monitor",
+    "monitor", "monitor", "monitor", "monitor", "monitor", "monitor", "monitor", "defender",
+    "defender", "defender", "network", "iam", "iam"
+]
+checks = [
+    "network_bastion_host_exists", "iam_custom_role_has_permissions_to_administer_resource_locks",
+    "appinsights_ensure_is_configured", "monitor_diagnostic_setting_with_appropriate_categories",
+    "monitor_diagnostic_settings_exists", "monitor_alert_create_update_nsg",
+    "monitor_alert_create_update_public_ip_address_rule", "monitor_alert_create_update_security_solution",
+    "monitor_alert_create_update_sqlserver_fr", "monitor_alert_create_policy_assignment",
+    "monitor_alert_delete_nsg", "monitor_alert_delete_policy_assignment",
+    "monitor_alert_delete_public_ip_address_rule", "monitor_alert_delete_security_solution",
+    "monitor_alert_delete_sqlserver_fr", "defender_ensure_mcas_is_enabled",
+    "defender_ensure_wdatp_is_enabled", "defender_ensure_iot_hub_defender_is_on",
+    "network_watcher_enabled", "iam_subscription_roles_owner_custom_not_created",
+    "iam_test"
+]
 
+# Generate timestamps (most recent first)
 now = datetime.now()
-timestamps = [now.replace(minute=(now.minute - i) % 60) for i in range(len(checks))]
+timestamps = [now - timedelta(minutes=i*3) for i in range(len(checks))]
 
 df = pd.DataFrame({
     "Status": statuses,
@@ -20,6 +40,7 @@ df = pd.DataFrame({
     "Timestamp": timestamps
 })
 
+# Color map for severity
 severity_colors = {
     "high": "#FF4C4C",   # Red
     "medium": "#FFA500", # Orange
@@ -38,7 +59,7 @@ app.layout = html.Div(style={"backgroundColor": "#0D1117", "color": "#C9D1D9", "
     html.Div([
         html.Label("🎯 Filter by Severity", style={"fontSize": "18px", "marginBottom": "10px"}),
         dcc.Dropdown(
-            options=[{"label": sev.title(), "value": sev} for sev in df["Severity"].unique()],
+            options=[{"label": sev.title(), "value": sev} for sev in sorted(df["Severity"].unique())],
             value=None,
             id="severity-filter",
             placeholder="Select severity",
